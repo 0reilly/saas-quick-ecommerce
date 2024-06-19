@@ -1,0 +1,52 @@
+name: CI/CD
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build frontend
+        run: pnpm run ci:build
+      - name: Build Docker image
+        run: docker build ./frontend -t your-username/ecommerce-frontend:latest
+      - name: Push Docker image to Docker Hub
+        run: docker push your-username/ecommerce-frontend:latest
+  backend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build backend
+        run: pnpm run ci:build
+      - name: Build Docker image
+        run: docker build ./backend -t your-username/ecommerce-backend:latest
+      - name: Push Docker image to Docker Hub
+        run: docker push your-username/ecommerce-backend:latest
+  test:
+    needs: [build, backend-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Start Backend for testing
+        run: docker-compose up -d backend
+      - name: Run frontend unit tests
+        run: docker-compose run test-frontend
+      - name: Run backend unit tests
+        run: docker-compose run test-backend
+      - name: Stop Backend
+        run: docker-compose down
+  deploy:
+    needs: [build, backend-build, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to DigitalOcean
+        uses: digitalocean/action-doctl@v1
+        with:
+          token: ${{ secrets.DO_TOKEN }}
+      - name: Deploy to DigitalOcean
+        run: doctl app deploy --manifest deployment/digitalocean/app.yaml

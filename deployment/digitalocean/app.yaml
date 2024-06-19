@@ -1,0 +1,56 @@
+runtime: nodejs
+
+stack: nodejs
+
+processes:
+  - name: frontend
+    command: pnpm run start
+    scale: 1
+  - name: backend
+    command: pnpm run start
+    scale: 1
+
+resources:
+  - type: mongodb
+    name: ecommerce-db
+    version: 4.4.0
+    region: nyc1
+  - type: redis
+    name: ecommerce-redis
+    version: 6.2.6
+    region: nyc1
+  - type: kafka
+    name: ecommerce-kafka
+    version: 2.8.1
+    region: nyc1
+    resources:
+      - cpu: 1
+        memory: 2048
+
+environment:
+  - key: MONGO_ATLAS_URI
+    value: mongodb+srv://<your_username>:<your_password>@<your_cluster_name>.mongodb.net/<your_database_name>?retryWrites=true&w=majority
+  - key: MONGO_ATLAS_USER
+    value: <your_username>
+  - key: MONGO_ATLAS_PASSWORD
+    value: <your_password>
+  - key: JWT_SECRET
+    value: your_secret_key
+  - key: STRIPE_SECRET_KEY
+    value: sk_test_YOUR_STRIPE_SECRET_KEY
+  - key: FRONTEND_URL
+    value: http://frontend:3000
+  - key: REDIS_URL
+    value: redis://ecommerce-redis:6379
+  - key: REDIS_PASSWORD
+    value: password
+  - key: KAFKA_BROKERS
+    value: ecommerce-kafka:9092
+  - key: REDIS_HOST
+    value: ecommerce-redis
+  - key: REDIS_PORT
+    value: "6379"
+  - key: KAFKA_HOST
+    value: ecommerce-kafka
+  - key: KAFKA_PORT
+    value: "9092"
